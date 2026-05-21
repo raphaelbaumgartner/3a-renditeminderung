@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3a Renditeminderung – BIB-Vergleich Schweiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1f2535;
+    --border: #2a3148;
+    --accent: #e8c84a;
+    --best: #4ae8a0;
+    --worst: #e84a4a;
+    --text: #e8eaf0;
+    --muted: #7a8099;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(42,49,72,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(42,49,72,0.2) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  .container { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 40px 20px; }
+
+  .tag {
+    display: inline-block; font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
+    border: 1px solid var(--accent); padding: 4px 10px; margin-bottom: 14px; opacity: 0.85;
+  }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.15; margin-bottom: 10px; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .subtitle { font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 560px; margin-bottom: 36px; }
+
+  /* Controls */
+  .controls-row {
+    display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-end;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px 28px; margin-bottom: 20px;
+  }
+  .ctrl { display: flex; flex-direction: column; gap: 8px; }
+  .ctrl-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+
+  /* Fixed value pill */
+  .fixed-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 16px; font-family: 'DM Mono', monospace;
+  }
+  .fixed-pill .val { font-size: 18px; font-weight: 500; color: var(--accent); }
+  .fixed-pill .sub { font-size: 10px; color: var(--muted); }
+
+  /* Duration toggle */
+  .toggle-wrap { display: flex; gap: 8px; }
+  .dur-btn {
+    padding: 8px 22px; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; transition: all 0.15s;
+  }
+  .dur-btn.active { background: var(--accent); color: #0f1117; border-color: var(--accent); }
+  .dur-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  /* Date field */
+  .date-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .date-input {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 14px; padding: 8px 12px;
+    border-radius: 8px; outline: none; transition: border-color 0.15s; color-scheme: dark;
+  }
+  .date-input:focus { border-color: var(--accent); }
+  .date-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(232,200,74,0.08); border: 1px solid rgba(232,200,74,0.2);
+    border-radius: 20px; padding: 4px 12px;
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent);
+  }
+
+  /* Info bar */
+  .info-bar {
+    background: rgba(232,200,74,0.06); border: 1px solid rgba(232,200,74,0.22);
+    border-radius: 8px; padding: 12px 18px; margin-bottom: 28px;
+    font-size: 12px; color: var(--muted); line-height: 1.7;
+  }
+  .info-bar strong { color: var(--accent); }
+
+  /* Summary */
+  .summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 32px; }
+  @media(max-width:600px){ .summary { grid-template-columns:1fr; } }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+  .stat-lbl { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .stat-val { font-family: 'DM Mono', monospace; font-size: 19px; font-weight: 500; }
+  .stat.g .stat-val { color: var(--best); }
+  .stat.r .stat-val { color: var(--worst); }
+
+  /* Chart */
+  .section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; }
+  .section-head h2 { font-family: 'DM Serif Display', serif; font-size: 1.25rem; }
+  .section-head span { font-size: 12px; color: var(--muted); }
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px 20px; margin-bottom: 32px; }
+  .chart-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
+  .chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .chart-name { width: 140px; font-size: 12px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media(max-width:580px){ .chart-name { width: 90px; font-size: 11px; } }
+  .chart-outer { flex: 1; height: 22px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .chart-fill { height: 100%; border-radius: 4px; transition: width 0.55s cubic-bezier(.4,0,.2,1); display: flex; align-items: center; padding-left: 8px; font-family: 'DM Mono', monospace; font-size: 11px; overflow: hidden; white-space: nowrap; }
+  .chart-chf { font-family: 'DM Mono', monospace; font-size: 12px; width: 78px; text-align: right; flex-shrink: 0; }
+  .legend { display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* Provider cards */
+  .cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 22px; transition: border-color 0.2s, transform 0.12s; position: relative; overflow: hidden;
+  }
+  .card:hover { border-color: var(--accent); transform: translateX(2px); }
+  .card.rank1 { border-color: rgba(74,232,160,0.35); }
+  .card.ranklast { border-color: rgba(232,74,74,0.25); }
+  .rank-badge {
+    position: absolute; top: 0; right: 0;
+    background: var(--border); font-family: 'DM Mono', monospace; font-size: 10px;
+    padding: 4px 10px; border-radius: 0 10px 0 8px; color: var(--muted);
+  }
+  .card.rank1 .rank-badge { background: rgba(74,232,160,0.12); color: var(--best); }
+  .card.ranklast .rank-badge { background: rgba(232,74,74,0.1); color: var(--worst); }
+  .confirmed-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(74,232,160,0.1); border: 1px solid rgba(74,232,160,0.25);
+    border-radius: 4px; padding: 2px 8px;
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--best);
+  }
+  .estimate-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(232,160,74,0.1); border: 1px solid rgba(232,160,74,0.25);
+    border-radius: 4px; padding: 2px 8px;
+    font-family: 'DM Mono', monospace; font-size: 10px; color: #e8a04a;
+  }
+  .card-top { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .card-name { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
+  .card-product { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .card-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  @media(max-width:640px){ .card-metrics { grid-template-columns: repeat(2,1fr); } }
+  .metric-lbl { font-size: 10px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 3px; }
+  .metric-val { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; }
+  .metric-val.g { color: var(--best); }
+  .metric-val.r { color: var(--worst); }
+  .metric-val.a { color: var(--accent); }
+
+  /* Edit section */
+  .edit-section {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px 24px; margin-bottom: 32px;
+  }
+  .edit-head { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .edit-desc { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .edit-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .edit-item-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .edit-item-prod { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 10px; }
+  .edit-fields { display: flex; flex-direction: column; gap: 8px; }
+  .edit-field { display: flex; align-items: center; gap: 8px; }
+  .edit-field label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--muted); width: 60px; flex-shrink: 0; }
+  .edit-field input {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 13px; padding: 5px 8px;
+    border-radius: 5px; width: 70px; outline: none; text-align: right; transition: border-color 0.15s;
+  }
+  .edit-field input:focus { border-color: var(--accent); }
+  .edit-field .unit { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .add-btn {
+    background: transparent; border: 1px dashed var(--border); color: var(--muted);
+    border-radius: 8px; padding: 14px; cursor: pointer; font-size: 12px;
+    font-family: 'DM Mono', monospace; transition: all 0.15s; text-align: center;
+  }
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .del-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 0; line-height: 1; float: right; margin-top: -2px; }
+  .del-btn:hover { color: var(--worst); }
+
+  /* Footnote */
+  .footnote {
+    background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 16px 20px; font-size: 12px; color: var(--muted); line-height: 1.7;
+  }
+  .footnote strong { color: var(--text); }
+  .footnote a { color: var(--accent); text-decoration: none; }
+
+  /* BIB source link */
+  .bib-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--muted); text-decoration: none;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 3px 9px;
+    transition: all 0.15s;
+  }
+  .bib-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .card { animation: fadeIn 0.35s ease both; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="tag">Säule 3a · FIDLEG BIB · Schweiz 2025/2026</div>
+  <h1>Renditeminderung<br><em>ohne Risikokosten</em></h1>
+  <p class="subtitle">Vergleich der Produktkosten (RIY) aus den FIDLEG-Basisinformationsblättern. Ausschliesslich Anlage- und Verwaltungskosten — Risikoprämien (Tod/IV) sind nicht enthalten. Referenzprämie CHF 250/Mt. (CHF 3'000/J.), Szenarien 15 und 30 Jahre gem. BIB-Standard.</p>
+
+  <!-- Controls -->
+  <div class="controls-row">
+    <div class="ctrl">
+      <div class="ctrl-label">Monatliche Prämie</div>
+      <div class="fixed-pill">
+        <span class="val">CHF 250</span>
+        <span class="sub">CHF 3'000 / Jahr<br>gem. BIB-Referenz</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-label">Brutto-Rendite</div>
+      <div class="fixed-pill">
+        <span class="val">6.04 %</span>
+        <span class="sub">FINMA-Ø 20 Jahre<br>gem. BIB-Mittelszenario</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-label">Laufzeit (gem. BIB)</div>
+      <div class="toggle-wrap" id="durBtns">
+        <button class="dur-btn active" data-y="15">15 Jahre</button>
+        <button class="dur-btn" data-y="30">30 Jahre</button>
+      </div>
+    </div>
+    <div class="ctrl" style="margin-left:auto;">
+      <div class="ctrl-label">Fondsdaten per</div>
+      <div class="date-wrap">
+        <input type="date" class="date-input" id="dataDate" value="2026-05-21">
+        <div class="date-badge" id="dateBadge">📅 Daten per 21.05.2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div class="info-bar">
+    <strong>BIB-Methodik:</strong> Die Renditeminderung (RIY / Reduction in Yield) gem. FIDLEG Art. 58 ff. zeigt den jährlichen Kostenabzug von der Bruttorendite. Enthält Abschluss-, Verwaltungs- und Fondskosten — <strong>keine Risikoprämien</strong> (Tod, IV, Prämienbefreiung). Bruttorendite <strong>6.04 %</strong> = FINMA-ausgewiesener Durchschnitt der letzten 20 Jahre. Referenzprämie CHF 3'000/Jahr — RIY kann bei anderen Prämienbeträgen leicht abweichen. &nbsp;<span id="dateBadgeInline" class="date-badge" style="font-size:10px;"></span>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary">
+    <div class="stat"><div class="stat-lbl">Einzahlungen total</div><div class="stat-val" id="sumEinzahlung">—</div></div>
+    <div class="stat g"><div class="stat-lbl">Günstigstes Netto-Kapital</div><div class="stat-val" id="sumBest">—</div></div>
+    <div class="stat r"><div class="stat-lbl">Kostennachteil Teuerster</div><div class="stat-val" id="sumDiff">—</div></div>
+  </div>
+
+  <!-- Chart -->
+  <div class="section-head"><h2>Netto-Kapital nach Kosten</h2><span>Mittleres Szenario · CHF 250/Mt. · 6.04 % Brutto</span></div>
+  <div class="chart-wrap">
+    <div class="chart-label">Endkapital in CHF</div>
+    <div id="chartBars"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--best)"></div>Netto-Kapital (nach RIY)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(232,74,74,0.6)"></div>Kostenverlust durch RIY</div>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="section-head"><h2>Detailvergleich</h2><span>Sortiert nach RIY (günstigste zuerst)</span></div>
+  <div class="cards" id="cards"></div>
+
+  <!-- Edit Section -->
+  <div class="edit-section">
+    <div class="edit-head">BIB-Werte bearbeiten</div>
+    <div class="edit-desc">RIY-Werte direkt aus den Basisinformationsblättern. ✅ = bestätigte BIB-Werte · ⚠ = Schätzwert.</div>
+    <div class="edit-grid" id="editGrid"></div>
+  </div>
+
+  <!-- Footnote -->
+  <div class="footnote">
+    <strong>Datenquellen:</strong> RIY-Werte gem. FIDLEG-Basisinformationsblättern der jeweiligen Versicherer (✅ bestätigt) resp. Schätzwerte aus vitafinance.ch (⚠). Bruttorendite 6.04 % = von der FINMA ausgewiesener Durchschnitt der letzten 20 Jahre, verwendet im BIB-Mittelszenario. Referenzprämie CHF 3'000/Jahr. Keine Anlageberatung — massgeblich sind stets die individuellen BIBs des jeweiligen Versicherers:
+    <a href="https://www.axa.ch/de/privatkunden/angebote/vorsorge-vermoegen/3-saeule-private-vorsorge/vorsorgeplan-smartflex.html" target="_blank">AXA</a> ·
+    <a href="https://www.helvetia.com/ch/web/de/privatkunden/vorsorge/lebensversicherung/basisinformationsblatt.html" target="_blank">Helvetia</a> ·
+    <a href="https://www.allianz.ch/basisinfoblatt" target="_blank">Allianz</a>
+    <br><br>
+    <strong>Erstellt von:</strong> Raphael Lorenz Baumgartner
+  </div>
+</div>
+
+<script>
+// ── Providers ─────────────────────────────────────────────────────────────
+// confirmed: true = direkte BIB-Werte · false = Schätzung
+let PROVIDERS = [
+  {
+    id:1, name:"AXA", product:"Vorsorgeplan SmartFlex",
+    color:"#4ae8a0", confirmed:true,
+    riy:{ 15: 1.89, 30: 1.29 },
+    bibUrl:"https://www.axa.ch/de/privatkunden/angebote/vorsorge-vermoegen/3-saeule-private-vorsorge/vorsorgeplan-smartflex.html"
+  },
+  {
+    id:2, name:"PAX", product:"LifeStar / TerzaLifeStar / LifeStarInvest / TerzaLifeStarInvest",
+    color:"#a8e84a", confirmed:true,
+    riy:{ 15: 2.14, 30: 1.40 },
+    bibUrl:"https://www.pax.ch/de/private-vorsorge/download-center"
+  },
+  {
+    id:3, name:"Helvetia / Baloise", product:"Performanceplan",
+    color:"#4ab4e8", confirmed:true,
+    riy:{ 15: 2.50, 30: 1.40 },
+    bibUrl:"https://www.helvetia.com/ch/web/de/privatkunden/vorsorge/lebensversicherung/basisinformationsblatt.html"
+  },
+  {
+    id:4, name:"Allianz", product:"SmartInvest",
+    color:"#0072ce", confirmed:true,
+    riy:{ 15: 3.19, 30: 2.36 },
+    bibUrl:"https://www.allianz.ch/de/privatkunden/angebote/vorsorge-lebensversicherungen/downloads.html"
+  },
+  {
+    id:5, name:"PAX", product:"FondsStar / TerzaFondsStar / TerzaFondsStarInvest",
+    color:"#e8d44a", confirmed:true,
+    riy:{ 15: 3.83, 30: 2.33 },
+    bibUrl:"https://www.pax.ch/de/private-vorsorge/download-center"
+  },
+  {
+    id:6, name:"Swiss Life", product:"Opportunities Duo",
+    color:"#e8a04a", confirmed:false,
+    riy:{ 15: 2.78, 30: 1.74 },
+    bibUrl:"https://www.swisslife.ch/de/private/vorsorge-vermoegen/saeule-3a/opportunities-duo.html"
+  },
+  {
+    id:7, name:"Swiss Life", product:"Life Dynamic Elements",
+    color:"#e87a4a", confirmed:false,
+    riy:{ 15: 2.67, 30: 1.67 },
+    bibUrl:"https://www.swisslife.ch/de/private/vorsorge-vermoegen/lebensversicherung.html"
+  },
+  {
+    id:8, name:"Zurich", product:"Vorsorge Invest Plus",
+    color:"#c04ae8", confirmed:false,
+    riy:{ 15: 2.40, 30: 1.50 },
+    bibUrl:"https://www.zurich.ch/de/privatkunden/vorsorge/lebensversicherung"
+  },
+  {
+    id:9, name:"Generali", product:"SavoirVivre Invest",
+    color:"#4a6ae8", confirmed:false,
+    riy:{ 15: 2.60, 30: 1.65 },
+    bibUrl:"https://www.generali.ch/de/privatkunden/vorsorge/saeule-3a"
+  },
+];
+let nextId = 10;
+
+const PRAEMIE_ANNUAL = 3000;   // CHF 3'000/Jahr — gem. BIB-Referenz
+const BRUTTO         = 6.04;   // FINMA Ø 20 Jahre
+let   duration       = 15;
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function fv(pmt, rate_pct, years) {
+  const r = rate_pct / 100;
+  if (Math.abs(r) < 0.0001) return pmt * years;
+  return pmt * (Math.pow(1 + r, years) - 1) / r;
+}
+function fmt(n) { return "CHF " + Math.round(n).toLocaleString('de-CH'); }
+function pct(n) { return n.toFixed(2) + " %"; }
+
+// ── Render ────────────────────────────────────────────────────────────────
+function render() {
+  const total = PRAEMIE_ANNUAL * duration;
+  document.getElementById('sumEinzahlung').textContent = fmt(total);
+
+  const results = PROVIDERS.map(p => {
+    const riy    = p.riy[duration] ?? 2.0;
+    const net    = BRUTTO - riy;
+    const grossC = fv(PRAEMIE_ANNUAL, BRUTTO, duration);
+    const netC   = fv(PRAEMIE_ANNUAL, net,    duration);
+    const cost   = grossC - netC;
+    return { ...p, riy, net, grossC, netC, cost };
+  }).sort((a, b) => a.riy - b.riy);
+
+  document.getElementById('sumBest').textContent = fmt(results[0].netC);
+  document.getElementById('sumDiff').textContent = fmt(results[0].netC - results[results.length-1].netC);
+
+  // Chart
+  const maxG = Math.max(...results.map(r => r.grossC));
+  document.getElementById('chartBars').innerHTML = results.map((r, i) => {
+    const netW  = (r.netC / maxG * 100).toFixed(1);
+    const isF = i === 0, isL = i === results.length - 1;
+    const col = isF ? 'var(--best)' : isL ? 'rgba(232,74,74,0.65)' : r.color;
+    return `<div class="chart-row">
+      <div class="chart-name" title="${r.name} · ${r.product}">${r.name}${r.confirmed ? '' : ' ⚠'}</div>
+      <div class="chart-outer">
+        <div class="chart-fill" style="width:${netW}%;background:${col};color:#0f1117;">
+          ${parseFloat(netW) > 12 ? r.product.split(' /')[0] : ''}
+        </div>
+      </div>
+      <div class="chart-chf">${fmt(r.netC)}</div>
+    </div>`;
+  }).join('');
+
+  // Cards
+  document.getElementById('cards').innerHTML = results.map((r, i) => {
+    const isF = i === 0, isL = i === results.length - 1;
+    const badge = r.confirmed
+      ? `<span class="confirmed-badge">✅ BIB-Wert</span>`
+      : `<span class="estimate-badge">⚠ Schätzwert</span>`;
+    const bibLink = r.bibUrl
+      ? `<a href="${r.bibUrl}" target="_blank" rel="noopener" class="bib-link">📄 BIB-Quelle</a>`
+      : '';
+    return `<div class="card ${isF?'rank1':''} ${isL?'ranklast':''}" style="animation-delay:${i*0.04}s">
+      <div class="rank-badge">${isF ? '🏆 Tiefste Kosten' : '#'+(i+1)}</div>
+      <div class="card-top">
+        <div>
+          <div class="card-name">${r.name}</div>
+          <div class="card-product">${r.product}</div>
+        </div>
+        ${badge}
+        ${bibLink}
+      </div>
+      <div class="card-metrics">
+        <div><div class="metric-lbl">RIY (${duration}J)</div><div class="metric-val ${isF?'g':isL?'r':''}">${pct(r.riy)}</div></div>
+        <div><div class="metric-lbl">Brutto-Rendite</div><div class="metric-val">${pct(BRUTTO)}</div></div>
+        <div><div class="metric-lbl">Netto-Rendite</div><div class="metric-val a">${pct(r.net)}</div></div>
+        <div><div class="metric-lbl">Kostenverlust CHF</div><div class="metric-val r">${fmt(r.cost)}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Edit grid ─────────────────────────────────────────────────────────────
+function renderEdit() {
+  document.getElementById('editGrid').innerHTML =
+    PROVIDERS.map(p => `
+      <div class="edit-item" id="ei-${p.id}">
+        <button class="del-btn" onclick="delProvider(${p.id})">×</button>
+        <div class="edit-item-name">${p.name} ${p.confirmed ? '✅' : '⚠'}</div>
+        <div class="edit-item-prod">${p.product}</div>
+        <div class="edit-fields">
+          <div class="edit-field">
+            <label>RIY 15J</label>
+            <input type="number" step="0.01" min="0" max="10" value="${p.riy[15].toFixed(2)}"
+              onchange="updateRIY(${p.id},15,this.value)">
+            <span class="unit">%</span>
+          </div>
+          <div class="edit-field">
+            <label>RIY 30J</label>
+            <input type="number" step="0.01" min="0" max="10" value="${p.riy[30].toFixed(2)}"
+              onchange="updateRIY(${p.id},30,this.value)">
+            <span class="unit">%</span>
+          </div>
+          <div class="edit-field" style="margin-top:4px;">
+            <label style="width:60px;">Bestätigt</label>
+            <input type="checkbox" ${p.confirmed?'checked':''} onchange="updateConfirmed(${p.id},this.checked)"
+              style="width:auto;padding:0;background:none;border:none;">
+          </div>
+          ${p.bibUrl ? `<div style="margin-top:8px;"><a href="${p.bibUrl}" target="_blank" rel="noopener" class="bib-link" style="font-size:10px;">📄 BIB-Seite öffnen</a></div>` : ''}
+        </div>
+      </div>
+    `).join('') +
+    `<button class="add-btn" onclick="addProvider()">+ Anbieter hinzufügen</button>`;
+}
+
+function updateRIY(id, yr, val) {
+  const p = PROVIDERS.find(x => x.id === id);
+  if (p) { p.riy[yr] = parseFloat(val) || 0; render(); }
+}
+function updateConfirmed(id, val) {
+  const p = PROVIDERS.find(x => x.id === id);
+  if (p) { p.confirmed = val; renderEdit(); render(); }
+}
+function delProvider(id) {
+  PROVIDERS = PROVIDERS.filter(x => x.id !== id);
+  renderEdit(); render();
+}
+function addProvider() {
+  const name    = prompt("Name des Versicherers:"); if (!name) return;
+  const product = prompt("Produktname:") || "—";
+  const r15     = parseFloat(prompt("RIY 15 Jahre (z.B. 2.10):")) || 2.0;
+  const r30     = parseFloat(prompt("RIY 30 Jahre (z.B. 1.40):")) || 1.4;
+  const bibUrl  = prompt("BIB-URL (optional, leer lassen falls nicht bekannt):") || '';
+  const colors  = ["#e84a8a","#8ae84a","#4ae8e8","#e8e84a","#8a4ae8"];
+  PROVIDERS.push({ id: nextId++, name, product, color: colors[nextId%5], confirmed: false, riy: {15:r15,30:r30}, bibUrl });
+  renderEdit(); render();
+}
+
+// ── Date badge ────────────────────────────────────────────────────────────
+function updateDateBadge(val) {
+  if (!val) return;
+  const d   = new Date(val + 'T00:00:00');
+  const str = d.toLocaleDateString('de-CH', { day:'2-digit', month:'2-digit', year:'numeric' });
+  const txt = '📅 Daten per ' + str;
+  document.getElementById('dateBadge').textContent = txt;
+  const inl = document.getElementById('dateBadgeInline');
+  if (inl) inl.textContent = txt;
+}
+document.getElementById('dataDate').addEventListener('change', e => updateDateBadge(e.target.value));
+updateDateBadge(document.getElementById('dataDate').value);
+
+// ── Duration toggle ───────────────────────────────────────────────────────
+document.getElementById('durBtns').addEventListener('click', e => {
+  const btn = e.target.closest('.dur-btn');
+  if (!btn) return;
+  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  duration = parseInt(btn.dataset.y);
+  render();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+renderEdit();
+render();
+</script>
+</body>
+</html>
